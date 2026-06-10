@@ -1,9 +1,10 @@
 #!/bin/bash
 # =============================================================================
 # deploy.sh
-# WGU Task Management System – EC2 Deployment Script
+# WGU Task Management System – EC2 Ubuntu Deployment Script
 # Installs dependencies, clones the repo, and starts the application
 # using Docker and Docker Compose.
+# Run as: bash deploy.sh
 # =============================================================================
 
 set -e  # Exit immediately on any error
@@ -16,18 +17,37 @@ echo "============================================"
 # 1. Update system packages
 # --------------------------------------------------------------------------
 echo "[1/6] Updating system packages..."
-sudo yum update -y
+sudo apt-get update -y
+sudo apt-get upgrade -y
 
 # --------------------------------------------------------------------------
 # 2. Install Docker
 # --------------------------------------------------------------------------
 echo "[2/6] Installing Docker..."
-sudo yum install -y docker
+sudo apt-get install -y ca-certificates curl gnupg lsb-release
+
+# Add Docker's official GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add the Docker apt repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update -y
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+# Start and enable Docker
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# Add the ec2-user to the docker group so sudo is not required
-sudo usermod -aG docker ec2-user
+# Add ubuntu user to the docker group (avoids needing sudo for docker commands)
+sudo usermod -aG docker ubuntu
 echo "  Docker installed: $(docker --version)"
 
 # --------------------------------------------------------------------------
@@ -43,7 +63,7 @@ echo "  Docker Compose installed: $(docker-compose --version)"
 # 4. Install Git
 # --------------------------------------------------------------------------
 echo "[4/6] Installing Git..."
-sudo yum install -y git
+sudo apt-get install -y git
 echo "  Git installed: $(git --version)"
 
 # --------------------------------------------------------------------------
@@ -51,8 +71,7 @@ echo "  Git installed: $(git --version)"
 # --------------------------------------------------------------------------
 echo "[5/6] Cloning repository..."
 
-# Replace the URL below with your actual GitLab repository URL
-REPO_URL="https://gitlab.com/<your-username>/<your-repo>.git"
+REPO_URL="https://github.com/Anmepod44/d424-software-engineering-capstone-working_branch.git"
 APP_DIR="task-management-system"
 
 if [ -d "$APP_DIR" ]; then
@@ -65,7 +84,7 @@ else
 fi
 
 # Check out the working branch
-git checkout working_branch 2>/dev/null || echo "  Already on working_branch or branch not found – continuing."
+git checkout working_branch 2>/dev/null || echo "  Already on working_branch – continuing."
 
 # --------------------------------------------------------------------------
 # 6. Build and start with Docker Compose
