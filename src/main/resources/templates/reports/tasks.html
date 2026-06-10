@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { padding-top: 0; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary no-print">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/tasks"><i class="bi bi-check2-square"></i> Task Management</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/tasks">Tasks</a>
+                <a class="nav-link" href="/projects">Projects</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Report Header with Title and Timestamp -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1" th:text="${report.title}">Task Report</h2>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-calendar"></i> Generated: 
+                            <strong th:text="${report.formattedGeneratedAt}"></strong>
+                        </p>
+                    </div>
+                    <button onclick="window.print()" class="btn btn-primary no-print">
+                        <i class="bi bi-printer"></i> Print Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Summary -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5>Report Summary</h5>
+                <p>Total Tasks: <strong th:text="${report.taskCount}"></strong></p>
+            </div>
+        </div>
+
+        <!-- Report Table with Multiple Columns and Rows -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Task Name</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Assigned User</th>
+                                <th>Due Date</th>
+                                <th>Project</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(report.tasks)}">
+                                <td colspan="7" class="text-center text-muted">No tasks to display</td>
+                            </tr>
+                            <tr th:each="task : ${report.tasks}">
+                                <td th:text="${task.title}"></td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${task.status.name() == 'COMPLETED' ? 'bg-success' : 
+                                                          task.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                          task.status.name() == 'CANCELLED' ? 'bg-secondary' : 'bg-warning'}"
+                                          th:text="${task.status.displayName}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${task.priority.name() == 'URGENT' ? 'bg-danger' : 
+                                                          task.priority.name() == 'HIGH' ? 'bg-warning' : 
+                                                          task.priority.name() == 'LOW' ? 'bg-secondary' : 'bg-info'}"
+                                          th:text="${task.priority.displayName}"></span>
+                                </td>
+                                <td th:text="${task.assignedTo != null ? task.assignedTo.username : 'Unassigned'}"></td>
+                                <td th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'yyyy-MM-dd') : 'No due date'}"></td>
+                                <td th:text="${task.project != null ? task.project.name : 'No project'}"></td>
+                                <td th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Footer -->
+        <div class="mt-4 text-center text-muted no-print">
+            <p>End of Report</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
