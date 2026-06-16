@@ -5,13 +5,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -26,27 +31,49 @@ public class SecurityConfig {
     }
 
     /**
-     * Wire CustomUserDetailsService + BCrypt into a DaoAuthenticationProvider
-     * so Spring Security authenticates against the database.
+     * Database-backed authentication provider using CustomUserDetailsService.
      */
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
 
+    /**
+     * Hardcoded fallback admin user.
+     * Username: admin  |  Password: admin123
+     * Works regardless of database state.
+     */
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public UserDetailsService inMemoryUserDetailsService() {
+        return new InMemoryUserDetailsManager(
+            User.withUsername("admin")
+                .password(passwordEncoder().encode("admin123"))
+                .roles("ADMIN")
+                .build()
+        );
+    }
+
+    /**
+     * ProviderManager chains both providers:
+     * 1. Database (CustomUserDetailsService)
+     * 2. Hardcoded fallback (InMemoryUserDetailsManager)
+     */
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider inMemoryProvider = new DaoAuthenticationProvider();
+        inMemoryProvider.setUserDetailsService(inMemoryUserDetailsService());
+        inMemoryProvider.setPasswordEncoder(passwordEncoder());
+
+        return new ProviderManager(List.of(daoAuthenticationProvider(), inMemoryProvider));
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .authenticationProvider(authenticationProvider())
+            .authenticationManager(authenticationManager())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/h2-console/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")

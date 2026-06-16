@@ -17,8 +17,8 @@ COPY --from=build /app/target/*.jar app.jar
 # Expose port
 EXPOSE 8080
 
-# Set active profile to prod
-ENV SPRING_PROFILES_ACTIVE=prod
+# Set active profile to dev (H2 in-memory, no external database needed)
+ENV SPRING_PROFILES_ACTIVE=dev
 
 # Run application
 ENTRYPOINT ["java", "-jar", "app.jar"]
