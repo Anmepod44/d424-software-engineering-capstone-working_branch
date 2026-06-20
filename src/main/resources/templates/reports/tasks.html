@@ -35,9 +35,14 @@
                             <strong th:text="${report.formattedGeneratedAt}"></strong>
                         </p>
                     </div>
-                    <button onclick="window.print()" class="btn btn-primary no-print">
-                        <i class="bi bi-printer"></i> Print Report
-                    </button>
+                    <div class="d-flex gap-2 no-print">
+                        <button onclick="window.print()" class="btn btn-outline-primary">
+                            <i class="bi bi-printer"></i> Print Report
+                        </button>
+                        <a href="/reports/tasks/download" class="btn btn-success">
+                            <i class="bi bi-download"></i> Download .txt
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
