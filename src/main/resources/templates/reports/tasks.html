@@ -6,95 +6,181 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        @media print {
-            .no-print { display: none; }
-            body { padding-top: 0; }
+        /* ── Screen styles ─────────────────────────────── */
+        body { background-color: #f8f9fa; }
+
+        .action-bar {
+            position: sticky;
+            top: 56px;          /* sits just below the navbar */
+            z-index: 1020;
+            background: #fff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
         }
+
+        .report-meta h2 { margin: 0; font-size: 1.3rem; }
+        .report-meta small { color: #6c757d; }
+
+        /* ── Print styles ───────────────────────────────── */
+        @media print {
+            @page { size: A4 landscape; margin: 15mm 10mm; }
+
+            .no-print { display: none !important; }
+            .action-bar { display: none !important; }
+            nav { display: none !important; }
+
+            body { background: #fff; font-size: 9pt; }
+
+            .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+            .card { border: none !important; box-shadow: none !important; }
+            .card-body { padding: 0 !important; }
+
+            /* Print header */
+            .print-header { display: block !important; margin-bottom: 12pt; }
+
+            table {
+                width: 100% !important;
+                font-size: 8pt;
+                border-collapse: collapse;
+                table-layout: fixed;
+            }
+            th, td {
+                border: 1px solid #555 !important;
+                padding: 4pt 5pt !important;
+                word-wrap: break-word;
+                overflow: hidden;
+            }
+            thead { background-color: #333 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* Fixed column widths for landscape A4 */
+            col.col-title    { width: 22%; }
+            col.col-status   { width: 11%; }
+            col.col-priority { width: 9%; }
+            col.col-assigned { width: 13%; }
+            col.col-due      { width: 13%; }
+            col.col-project  { width: 18%; }
+            col.col-created  { width: 14%; }
+
+            .badge { background: none !important; color: #000 !important; font-weight: bold; }
+        }
+
+        /* Hide print-only header on screen */
+        .print-header { display: none; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-primary no-print">
+
+    <!-- ── Navbar ─────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/tasks"><i class="bi bi-check2-square"></i> Task Management</a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/tasks">Tasks</a>
-                <a class="nav-link" href="/projects">Projects</a>
+            <a class="navbar-brand fw-bold" href="/tasks">
+                <i class="bi bi-check2-square"></i> Task Management
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/tasks"><i class="bi bi-list-task"></i> Tasks</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/projects"><i class="bi bi-folder"></i> Projects</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/reports/tasks"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a></li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <!-- Report Header with Title and Timestamp -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="mb-1" th:text="${report.title}">Task Report</h2>
-                        <p class="text-muted mb-0">
-                            <i class="bi bi-calendar"></i> Generated: 
-                            <strong th:text="${report.formattedGeneratedAt}"></strong>
-                        </p>
-                    </div>
-                    <div class="d-flex gap-2 no-print">
-                        <button onclick="window.print()" class="btn btn-outline-primary">
-                            <i class="bi bi-printer"></i> Print Report
-                        </button>
-                        <a href="/reports/tasks/download" class="btn btn-success">
-                            <i class="bi bi-download"></i> Download .txt
-                        </a>
-                    </div>
-                </div>
-            </div>
+    <!-- ── Sticky action bar ──────────────────────────── -->
+    <div class="action-bar no-print">
+        <div class="report-meta">
+            <h2><i class="bi bi-file-earmark-bar-graph text-primary"></i>
+                <span th:text="${report.title}">Task Report</span>
+            </h2>
+            <small><i class="bi bi-clock"></i> Generated:
+                <strong th:text="${report.formattedGeneratedAt}"></strong>
+                &nbsp;|&nbsp;
+                <i class="bi bi-list-ol"></i> Total tasks:
+                <strong th:text="${report.taskCount}"></strong>
+            </small>
         </div>
-
-        <!-- Report Summary -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5>Report Summary</h5>
-                <p>Total Tasks: <strong th:text="${report.taskCount}"></strong></p>
-            </div>
+        <div class="d-flex gap-2">
+            <a href="/reports/tasks/download" class="btn btn-success">
+                <i class="bi bi-download"></i> Download .txt
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-primary">
+                <i class="bi bi-printer"></i> Print
+            </button>
         </div>
+    </div>
 
-        <!-- Report Table with Multiple Columns and Rows -->
-        <div class="card">
-            <div class="card-body">
+    <!-- ── Print-only header (hidden on screen) ─────── -->
+    <div class="print-header container">
+        <h2 th:text="${report.title}"></h2>
+        <p>Generated: <strong th:text="${report.formattedGeneratedAt}"></strong>
+           &nbsp;|&nbsp; Total tasks: <strong th:text="${report.taskCount}"></strong></p>
+        <hr>
+    </div>
+
+    <!-- ── Report table ───────────────────────────────── -->
+    <div class="container mt-3">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
+                    <table class="table table-bordered table-striped table-hover mb-0">
+                        <colgroup>
+                            <col class="col-title">
+                            <col class="col-status">
+                            <col class="col-priority">
+                            <col class="col-assigned">
+                            <col class="col-due">
+                            <col class="col-project">
+                            <col class="col-created">
+                        </colgroup>
                         <thead class="table-dark">
                             <tr>
-                                <th>Task Name</th>
-                                <th>Status</th>
-                                <th>Priority</th>
-                                <th>Assigned User</th>
-                                <th>Due Date</th>
-                                <th>Project</th>
-                                <th>Created At</th>
+                                <th><i class="bi bi-card-text"></i> Task Name</th>
+                                <th><i class="bi bi-circle-half"></i> Status</th>
+                                <th><i class="bi bi-exclamation-triangle"></i> Priority</th>
+                                <th><i class="bi bi-person"></i> Assigned User</th>
+                                <th><i class="bi bi-calendar-event"></i> Due Date</th>
+                                <th><i class="bi bi-folder"></i> Project</th>
+                                <th><i class="bi bi-clock-history"></i> Created Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:if="${#lists.isEmpty(report.tasks)}">
-                                <td colspan="7" class="text-center text-muted">No tasks to display</td>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>No tasks to display
+                                </td>
                             </tr>
                             <tr th:each="task : ${report.tasks}">
                                 <td th:text="${task.title}"></td>
                                 <td>
-                                    <span class="badge" 
-                                          th:classappend="${task.status.name() == 'COMPLETED' ? 'bg-success' : 
-                                                          task.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
-                                                          task.status.name() == 'CANCELLED' ? 'bg-secondary' : 'bg-warning'}"
+                                    <span class="badge"
+                                          th:classappend="${task.status.name() == 'COMPLETED'  ? 'bg-success'   :
+                                                           task.status.name() == 'IN_PROGRESS' ? 'bg-primary'   :
+                                                           task.status.name() == 'CANCELLED'   ? 'bg-secondary' : 'bg-warning text-dark'}"
                                           th:text="${task.status.displayName}"></span>
                                 </td>
                                 <td>
                                     <span class="badge"
-                                          th:classappend="${task.priority.name() == 'URGENT' ? 'bg-danger' : 
-                                                          task.priority.name() == 'HIGH' ? 'bg-warning' : 
-                                                          task.priority.name() == 'LOW' ? 'bg-secondary' : 'bg-info'}"
+                                          th:classappend="${task.priority.name() == 'URGENT' ? 'bg-danger'  :
+                                                           task.priority.name() == 'HIGH'   ? 'bg-warning text-dark' :
+                                                           task.priority.name() == 'LOW'    ? 'bg-secondary' : 'bg-info text-dark'}"
                                           th:text="${task.priority.displayName}"></span>
                                 </td>
                                 <td th:text="${task.assignedTo != null ? task.assignedTo.username : 'Unassigned'}"></td>
-                                <td th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'yyyy-MM-dd') : 'No due date'}"></td>
-                                <td th:text="${task.project != null ? task.project.name : 'No project'}"></td>
-                                <td th:text="${#temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${task.dueDate   != null ? #temporals.format(task.dueDate,   'yyyy-MM-dd') : 'No due date'}"></td>
+                                <td th:text="${task.project   != null ? task.project.name : 'No project'}"></td>
+                                <td th:text="${task.createdAt != null ? #temporals.format(task.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -102,9 +188,14 @@
             </div>
         </div>
 
-        <!-- Report Footer -->
-        <div class="mt-4 text-center text-muted no-print">
-            <p>End of Report</p>
+        <!-- bottom action bar (repeat buttons so user doesn't need to scroll up) -->
+        <div class="d-flex gap-2 justify-content-end mt-3 mb-5 no-print">
+            <a href="/reports/tasks/download" class="btn btn-success">
+                <i class="bi bi-download"></i> Download .txt
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-primary">
+                <i class="bi bi-printer"></i> Print
+            </button>
         </div>
     </div>
 
